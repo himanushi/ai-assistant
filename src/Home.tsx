@@ -7,19 +7,21 @@ const clickedFace = "👂";
 export const Home = () => {
   const face = useSignal(originalFace);
 
-  const handleMouseDown = () => {
+  const handlePress = () => {
     face.value = clickedFace;
   };
 
-  const handleMouseUp = () => {
+  const handleRelease = () => {
     face.value = originalFace;
   };
 
   return (
     <div
       className={styles.face}
-      onMouseDown={handleMouseDown}
-      onMouseUp={handleMouseUp}
+      onMouseDown={handlePress}
+      onMouseUp={handleRelease}
+      onTouchStart={handlePress}
+      onTouchEnd={handleRelease}
     >
       {face}
     </div>
