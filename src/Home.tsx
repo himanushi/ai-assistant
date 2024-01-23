@@ -1,7 +1,7 @@
 import { useSignal } from "@preact/signals";
 import { useEffect, useRef, useState } from "preact/hooks";
 import styles from "~/Home.module.css";
-import { speechToText } from "~/lib/openAiApi";
+import { compilation, speechToText } from "~/lib/openAiApi";
 
 const originalFace = "🐱";
 const clickedFace = "👂";
@@ -41,7 +41,8 @@ export const Home = () => {
       mediaRecorder.onstop = async () => {
         const audioBlob = new Blob(audioChunks.current, { type: "audio/webm" });
         const text = await speechToText(audioBlob);
-        console.log(text);
+        await compilation(text);
+        // console.log(text);
       };
     }
   };
