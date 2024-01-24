@@ -1,4 +1,6 @@
 import { token } from "~/store/token";
+import { functionCaller } from "~/tools/functionCaller";
+import { todoSchemas } from "~/tools/todoTool";
 
 export const models = async () => {
   fetch("https://api.openai.com/v1/models", {
@@ -18,6 +20,16 @@ export const compilation = async (text: string) => {
         content: text,
       },
     ],
+    tools: [
+      {
+        type: "function",
+        function: {
+          name: "set_timer",
+          description: "タイマーをセットします",
+        },
+      },
+      ...todoSchemas(),
+    ],
   };
 
   try {
@@ -34,9 +46,21 @@ export const compilation = async (text: string) => {
     }
 
     const data = await response.json();
-    return data.choices[0].message.content;
-  } catch (error) {
-    console.error("Error sending audio to OpenAI:", error);
+    const message = data.choices[0].message;
+
+    const tool_calls = message.tool_calls;
+    if (tool_calls) {
+      const tool = tool_calls.find((t: any) => t);
+      if (tool) {
+        const name = tool.function.name;
+        const args = JSON.parse(tool.function.arguments);
+        return functionCaller(name, args);
+      }
+    }
+
+    return message.content;
+  } catch (_error) {
+    return "文章生成時にエラーが発生しました";
   }
 };
 
@@ -68,7 +92,7 @@ export const speechToText = async (audioBlob: Blob) => {
   }
 };
 
-export const textToSpeech = async (text: string, voice = "alloy") => {
+export const textToSpeech = async (text: string) => {
   try {
     const response = await fetch("https://api.openai.com/v1/audio/speech", {
       method: "POST",
@@ -79,7 +103,7 @@ export const textToSpeech = async (text: string, voice = "alloy") => {
       body: JSON.stringify({
         model: "tts-1",
         input: text,
-        voice: voice,
+        voice: "alloy",
       }),
     });
 
