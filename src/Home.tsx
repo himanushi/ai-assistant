@@ -1,13 +1,16 @@
-import { useSignal } from "@preact/signals";
+import { signal } from "@preact/signals";
 import { useEffect, useRef, useState } from "preact/hooks";
 import styles from "~/Home.module.css";
 import { compilation, speechToText, textToSpeech } from "~/lib/openAiApi";
 
 const originalFace = "🐱";
+const thinkingFace = "🤔";
+const talkingFace = "😃";
 const clickedFace = "👂";
 
+const face = signal(originalFace);
+
 export const Home = () => {
-  const face = useSignal(originalFace);
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(
     null,
   );
@@ -34,16 +37,17 @@ export const Home = () => {
   };
 
   const handleRelease = async () => {
-    face.value = originalFace;
     if (mediaRecorder) {
       mediaRecorder.stop();
 
       mediaRecorder.onstop = async () => {
+        face.value = thinkingFace;
         const audioBlob = new Blob(audioChunks.current, { type: "audio/webm" });
         const text = await speechToText(audioBlob);
         const content = await compilation(text);
         const blob = await textToSpeech(content);
         if (!blob) return;
+        face.value = talkingFace;
         playAudioBlob(blob);
       };
     }
@@ -71,6 +75,7 @@ const playAudioBlob = (audioBlob: Blob) => {
   audioElement.onended = () => {
     document.body.removeChild(audioElement);
     URL.revokeObjectURL(audioUrl);
+    face.value = originalFace;
   };
 
   document.body.appendChild(audioElement);
